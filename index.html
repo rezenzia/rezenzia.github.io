@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
 <title>Баннер оценки альбома</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -8,7 +8,7 @@
 :root{
   --bg:#eef1f4; --panel:#ffffff; --ink:#151a20; --muted:#5d6774; --line:#d7dde4;
   --accent:#34587d; --accent-ink:#ffffff; --field:#f6f8fa;
-  --bad:#c2412d; --mid:#a56a00; --good:#1f8a4c;
+  --bad:#c62828; --mid:#d35400; --good:#1f8a4c; --gold:#a87a12;
   --f-display:"Unbounded","Manrope",system-ui,sans-serif;
   --f-body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
   --r:12px;
@@ -16,14 +16,16 @@
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0d1014; --panel:#151a20; --ink:#e9edf2; --muted:#94a0ad; --line:#27303a;
   --accent:#8db4dc; --accent-ink:#0d1014; --field:#10151a;
-  --bad:#ff7a66; --mid:#f2b84b; --good:#4fd18b; color-scheme:dark}}
+  --bad:#ff5c5c; --mid:#ff8a1f; --good:#4fd18b; --gold:#f0c75e; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0d1014; --panel:#151a20; --ink:#e9edf2; --muted:#94a0ad; --line:#27303a;
   --accent:#8db4dc; --accent-ink:#0d1014; --field:#10151a;
-  --bad:#ff7a66; --mid:#f2b84b; --good:#4fd18b; color-scheme:dark}
+  --bad:#ff5c5c; --mid:#ff8a1f; --good:#4fd18b; --gold:#f0c75e; color-scheme:dark}
 
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+[hidden]{display:none!important}
+img{max-width:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
 .wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:28px 48px}
 header.top{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 24px;margin-bottom:24px}
 h1{font-family:var(--f-display);font-weight:700;font-size:clamp(22px,3vw,30px);letter-spacing:-.01em;margin:0;text-wrap:balance}
@@ -60,7 +62,13 @@ textarea{resize:vertical;min-height:90px}
 .c-name{font-weight:700;font-size:16px}
 .c-score{grid-column:1 / -1;display:grid;grid-template-columns:minmax(0,1fr) 72px;gap:12px;align-items:center}
 .c-score input[type=text]{text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
-input[type=range]{width:100%;accent-color:var(--tier,var(--accent))}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:24px;margin:0;background:transparent;--p:60%}
+input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:4px;background:linear-gradient(to right,var(--tier,var(--accent)) 0 var(--p),var(--line) var(--p) 100%)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:var(--tier,var(--accent));border:4px solid var(--panel);box-shadow:0 0 0 1px var(--tier,var(--accent));margin-top:-7px}
+input[type=range]::-moz-range-track{height:8px;border-radius:4px;background:var(--line)}
+input[type=range]::-moz-range-progress{height:8px;border-radius:4px;background:var(--tier,var(--accent))}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--tier,var(--accent));border:4px solid var(--panel);box-shadow:0 0 0 1px var(--tier,var(--accent))}
+input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
 .chip{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1px solid currentColor;color:var(--tier,var(--muted));white-space:nowrap}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
 .legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--c);margin-right:6px;vertical-align:1px}
@@ -114,6 +122,7 @@ input[type=color]{width:44px;height:36px;border:1px solid var(--line);border-rad
           <span style="--c:var(--bad)">0.0-3.9 плохо</span>
           <span style="--c:var(--mid)">4.0-7.0 нормальный</span>
           <span style="--c:var(--good)">7.1-10.0 хороший</span>
+          <span style="--c:var(--gold)">итог 9.0+ золотой альбом</span>
         </div>
         <div class="crit" id="crit"></div>
       </section>
@@ -179,9 +188,12 @@ const WSUM=CRIT.reduce((a,c)=>a+c.w,0);
 /* Tiers: by the score rounded to one decimal. */
 function tier(v){const r=Math.round(v*10)/10;return r<4?"bad":r<=7?"mid":"good"}
 const TIER_LABEL={bad:"плохо",mid:"нормальный",good:"хороший"};
-const TOTAL_LABEL={bad:"плохо",mid:"нормальный альбом",good:"хороший альбом"};
-const TIER_BANNER={bad:"ПЛОХО",mid:"НОРМАЛЬНЫЙ АЛЬБОМ",good:"ХОРОШИЙ АЛЬБОМ"};
-const TIER_COL={dark:{bad:"#ff7a66",mid:"#f2b84b",good:"#4fd18b"},light:{bad:"#c2412d",mid:"#a56a00",good:"#1f8a4c"}};
+const TOTAL_LABEL={bad:"плохо",mid:"нормальный альбом",good:"хороший альбом",gold:"золотой альбом"};
+const TIER_BANNER={bad:"ПЛОХО",mid:"НОРМАЛЬНЫЙ АЛЬБОМ",good:"ХОРОШИЙ АЛЬБОМ",gold:"ЗОЛОТОЙ АЛЬБОМ"};
+const TIER_COL={dark:{bad:"#ff5c5c",mid:"#ff8a1f",good:"#4fd18b",gold:"#f0c75e"},light:{bad:"#c62828",mid:"#d35400",good:"#1f8a4c",gold:"#a87a12"}};
+/* The total gets a fourth level: gold at 9.0 and above. */
+function totalTier(v){return Math.round(v*10)/10>=9?"gold":tier(v)}
+const GOLD_STOPS={dark:["#fff1b8","#f0c75e","#b8862b","#ffe08a"],light:["#9a6f0c","#d1a02a","#7a5508","#b88a1a"]};
 
 const BLANK=()=>({
   artist:"",title:"",year:"",author:"",
@@ -243,8 +255,13 @@ function clampLines(lines,max,maxW){if(lines.length<=max)return lines;const out=
   out[max-1]=last.replace(/[\s,.;:—-]+$/,"")+"…";return out}
 function spaced(px){if("letterSpacing"in ctx)ctx.letterSpacing=px+"px"}
 
+function goldGrad(x0,y0,x1,y1,dark){const g=ctx.createLinearGradient(x0,y0,x1,y1);const st=GOLD_STOPS[dark?"dark":"light"];
+  st.forEach((c,i)=>g.addColorStop(i/(st.length-1),c));return g}
+function diamond(x,y,s,fill){ctx.save();ctx.translate(x,y);ctx.rotate(Math.PI/4);ctx.fillStyle=fill;ctx.fillRect(-s/2,-s/2,s,s);ctx.restore()}
 function draw(){
-  const dark=S.theme==="dark",acc=accentNow(),TC=TIER_COL[dark?"dark":"light"];
+  const dark=S.theme==="dark",TC=TIER_COL[dark?"dark":"light"];
+  const golden=totalTier(total())==="gold";
+  const acc=golden?TC.gold:accentNow();
   const fg=dark?"#f2f4f7":"#12161c",mu=dark?"rgba(242,244,247,.62)":"rgba(18,22,28,.58)",track=dark?"rgba(255,255,255,.14)":"rgba(18,22,28,.12)";
   ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,cv.height);
   ctx.save();ctx.setTransform(SC,0,0,SC,0,0);spaced(0);
@@ -289,16 +306,20 @@ function draw(){
   y+=36;
 
   // final score
-  const fs=total(),ft=tier(fs),fcol=TC[ft],top=y;
+  const fs=total(),ft=totalTier(fs),top=y;
   ctx.textAlign="left";ctx.fillStyle=mu;ctx.font="700 24px Manrope";spaced(5);ctx.fillText("ИТОГ",90,top+20);spaced(0);
   const num=fmt(fs);let big=180;ctx.font=`700 ${big}px Unbounded`;
   while(ctx.measureText(num).width>320&&big>110){big-=10;ctx.font=`700 ${big}px Unbounded`}
-  const base=top+20+big*.92;ctx.fillStyle=fcol;ctx.fillText(num,84,base);
-  const nw=ctx.measureText(num).width;ctx.fillStyle=mu;ctx.font="600 40px Unbounded";ctx.fillText("/10",84+nw+10,base);
+  const base=top+20+big*.92,nw=ctx.measureText(num).width;
+  const fcol=golden?goldGrad(84,base-big*.8,84+nw,base,dark):TC[ft];
+  ctx.save();if(golden){ctx.shadowColor=dark?"rgba(240,199,94,.45)":"rgba(168,122,18,.3)";ctx.shadowBlur=36}
+  ctx.fillStyle=fcol;ctx.fillText(num,84,base);ctx.restore();
+  ctx.fillStyle=golden?goldGrad(84+nw,base-40,84+nw+120,base,dark):mu;ctx.font="600 40px Unbounded";ctx.fillText("/10",84+nw+10,base);
   // tier pill
   ctx.font="800 22px Manrope";spaced(3);const lbl=TIER_BANNER[ft];const lw=ctx.measureText(lbl).width+36;
-  const py=base+30;rr(90,py,lw,46,23);ctx.strokeStyle=fcol;ctx.lineWidth=3;ctx.stroke();
-  ctx.fillStyle=fcol;ctx.fillText(lbl,108,py+31);spaced(0);
+  const py=base+30,pcol=golden?goldGrad(90,py,90+lw,py+46,dark):TC[ft];
+  rr(90,py,lw,46,23);ctx.strokeStyle=pcol;ctx.lineWidth=3;ctx.stroke();
+  ctx.fillStyle=pcol;ctx.fillText(lbl,108,py+31);spaced(0);
   const leftBottom=py+46;
 
   // criteria
@@ -331,6 +352,18 @@ function draw(){
     ctx.fillStyle=acc;ctx.fillRect(W/2-30,vy-62,60,4);ctx.fillStyle=fg;
     for(const l of vl){ctx.fillText(l,W/2,vy);vy+=46}
   }
+
+  // gold frame
+  if(golden){
+    const g=goldGrad(0,0,W,H,dark);
+    ctx.save();
+    if(dark){ctx.shadowColor="rgba(240,199,94,.35)";ctx.shadowBlur=24}
+    rr(30,30,W-60,H-60,40);ctx.strokeStyle=g;ctx.lineWidth=5;ctx.stroke();
+    ctx.restore();
+    ctx.save();ctx.globalAlpha=.55;rr(46,46,W-92,H-92,28);ctx.strokeStyle=g;ctx.lineWidth=1.5;ctx.stroke();ctx.restore();
+    const bgc=dark?"#0b0d11":"#f4f5f7";
+    for(const [dx,dy] of [[W/2,30],[W/2,H-30]]){diamond(dx,dy,30,bgc);diamond(dx,dy,18,g)}
+  }
   ctx.restore();
 }
 let raf=0;const redraw=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(draw)};
@@ -338,7 +371,8 @@ let raf=0;const redraw=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(
 /* ---------- form ---------- */
 const fields=["artist","title","year","author","scenario","verdict"];
 const tierVar=t=>`var(--${t})`;
-function paintItem(el,v){const t=tier(v);el.style.setProperty("--tier",tierVar(t));el.querySelector(".chip").textContent=TIER_LABEL[t]}
+function paintItem(el,v){const t=tier(v);el.style.setProperty("--tier",tierVar(t));el.querySelector(".chip").textContent=TIER_LABEL[t];
+  const r=el.querySelector("input[type=range]");if(r)r.style.setProperty("--p",(v*10)+"%")}
 function renderCrit(){
   const box=$("crit");box.textContent="";
   CRIT.forEach(c=>{
@@ -355,7 +389,7 @@ function renderCrit(){
   });
 }
 function updateTotal(){
-  const v=total(),t=tier(v);
+  const v=total(),t=totalTier(v);
   $("totalBox").style.setProperty("--tier",tierVar(t));
   $("totalOut").innerHTML="";$("totalOut").append(fmt(v));const sm=document.createElement("small");sm.textContent=" / 10";$("totalOut").append(sm);
   $("totalChip").textContent=TOTAL_LABEL[t];
@@ -402,7 +436,11 @@ function showSheet(){$("sheetImg").src=cv.toDataURL("image/png");$("sheet").hidd
 $("sheetClose").onclick=()=>{$("sheet").hidden=true};
 $("save").onclick=()=>{
   draw();
-  if(!downloads){showSheet();return}
+  if(!downloads){
+    if(!window.claude){ // opened as a standalone file: a plain download works here
+      cv.toBlob(b=>{const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=fname();
+        document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)},"image/png");return}
+    showSheet();return}
   cv.toBlob(async blob=>{
     try{await downloads.save({filename:fname(),data:blob});$("saveNote").textContent="Готово: баннер сохранён."}
     catch(err){const c=err&&err.code;
