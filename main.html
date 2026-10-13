@@ -1,0 +1,428 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Баннер оценки альбома</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,500&family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;700&display=swap">
+<style>
+/* Layout: editor column + sticky 9:16 preview; stacks preview-first on phones. Cool steel palette; tier colors (bad / normal / good) carry the meaning. */
+:root{
+  --bg:#eef1f4; --panel:#ffffff; --ink:#151a20; --muted:#5d6774; --line:#d7dde4;
+  --accent:#34587d; --accent-ink:#ffffff; --field:#f6f8fa;
+  --bad:#c2412d; --mid:#a56a00; --good:#1f8a4c;
+  --f-display:"Unbounded","Manrope",system-ui,sans-serif;
+  --f-body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d1014; --panel:#151a20; --ink:#e9edf2; --muted:#94a0ad; --line:#27303a;
+  --accent:#8db4dc; --accent-ink:#0d1014; --field:#10151a;
+  --bad:#ff7a66; --mid:#f2b84b; --good:#4fd18b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1014; --panel:#151a20; --ink:#e9edf2; --muted:#94a0ad; --line:#27303a;
+  --accent:#8db4dc; --accent-ink:#0d1014; --field:#10151a;
+  --bad:#ff7a66; --mid:#f2b84b; --good:#4fd18b; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:28px 48px}
+header.top{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 24px;margin-bottom:24px}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(22px,3vw,30px);letter-spacing:-.01em;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:0;max-width:60ch}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,400px);gap:28px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}.preview{order:-1}}
+
+.preview{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);display:flex;flex-direction:column;gap:12px}
+@media (max-width:860px){.preview{position:static}}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;justify-content:center}
+canvas#out{width:100%;max-width:340px;aspect-ratio:9/16;height:auto;border-radius:8px;display:block;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+button{font:inherit;cursor:pointer}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:10px 14px;font-weight:600}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);flex:1}
+.btn:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.note{color:var(--muted);font-size:13px;margin:0}
+
+.editor{display:flex;flex-direction:column;gap:18px;min-width:0}
+section.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+section.card h2{font-family:var(--f-display);font-size:13px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--muted);min-width:0}
+input[type=text],textarea,select{font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:9px;padding:9px 11px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:90px}
+.drop{border:1.5px dashed var(--line);border-radius:10px;padding:14px;display:flex;align-items:center;gap:14px;background:var(--field)}
+.drop.over{border-color:var(--accent)}
+.thumb{width:64px;height:64px;border-radius:8px;background:var(--line);flex:none;object-fit:cover}
+.drop p{margin:0;font-size:13px;color:var(--muted)}
+.drop .btn{padding:7px 11px;font-size:14px}
+
+.crit{display:flex;flex-direction:column;gap:10px}
+.c-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 12px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:10px}
+.c-name{font-weight:700;font-size:16px}
+.c-score{grid-column:1 / -1;display:grid;grid-template-columns:minmax(0,1fr) 72px;gap:12px;align-items:center}
+.c-score input[type=text]{text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--tier,var(--accent))}
+.chip{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1px solid currentColor;color:var(--tier,var(--muted));white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--c);margin-right:6px;vertical-align:1px}
+.total{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.total b{font-family:var(--f-display);font-size:40px;font-variant-numeric:tabular-nums;color:var(--tier,var(--ink));line-height:1}
+.total b small{font-size:18px;color:var(--muted)}
+.inline{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--ink)}
+.inline input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
+input[type=color]{width:44px;height:36px;border:1px solid var(--line);border-radius:8px;background:var(--field);padding:2px}
+
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:24px 16px;z-index:10}
+.sheet .box{background:var(--panel);border-radius:14px;padding:16px;max-width:380px;width:100%;display:flex;flex-direction:column;gap:12px;max-height:100%;overflow:auto}
+.sheet img{width:100%;border-radius:8px}
+@media (prefers-reduced-motion:no-preference){.btn{transition:filter .15s}.btn:hover{filter:brightness(1.06)}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Баннер оценки альбома</h1>
+  </header>
+
+  <div class="grid">
+    <div class="editor">
+      <section class="card">
+        <h2>Альбом</h2>
+        <div class="drop" id="drop">
+          <img class="thumb" id="thumb" alt="" hidden>
+          <div class="thumb" id="thumbEmpty"></div>
+          <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+            <p>Перетащи обложку сюда, вставь из буфера (Ctrl/Cmd+V) или выбери файл</p>
+            <div class="actions">
+              <label class="btn" for="cover" style="display:inline-block">Выбрать обложку</label>
+              <button class="btn" id="clearCover" type="button" hidden>Убрать</button>
+            </div>
+            <input type="file" id="cover" accept="image/*" hidden>
+          </div>
+        </div>
+        <div class="row">
+          <label class="f">Исполнитель<input type="text" id="artist"></label>
+          <label class="f">Альбом<input type="text" id="title"></label>
+        </div>
+        <div class="row">
+          <label class="f">Год<input type="text" id="year" inputmode="numeric" maxlength="4"></label>
+          <label class="f">Автор / ник<input type="text" id="author"></label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Оценки</h2>
+        <div class="legend">
+          <span style="--c:var(--bad)">0.0-3.9 плохо</span>
+          <span style="--c:var(--mid)">4.0-7.0 нормальный</span>
+          <span style="--c:var(--good)">7.1-10.0 хороший</span>
+        </div>
+        <div class="crit" id="crit"></div>
+      </section>
+
+      <section class="card">
+        <h2>Итог</h2>
+        <div class="total" id="totalBox"><b id="totalOut"></b><span class="chip" id="totalChip"></span></div>
+      </section>
+
+      <section class="card">
+        <h2>Текст</h2>
+        <label class="f">Сценарий / вайб<textarea id="scenario" maxlength="320"></textarea></label>
+        <label class="f">Вердикт одной строкой<input type="text" id="verdict" maxlength="90"></label>
+      </section>
+
+      <section class="card">
+        <h2>Оформление</h2>
+        <div class="row">
+          <label class="f">Фон баннера
+            <select id="theme"><option value="dark">Тёмный</option><option value="light">Светлый</option></select>
+          </label>
+          <div class="f">Декор (кавычка, линия)
+            <div class="inline" style="font-weight:600">
+              <input type="color" id="accent" aria-label="Цвет декора">
+              <label class="inline"><input type="checkbox" id="accentAuto"> из обложки</label>
+            </div>
+          </div>
+        </div>
+        <button class="btn" id="reset" type="button" style="align-self:flex-start">Очистить всё</button>
+      </section>
+    </div>
+
+    <aside class="preview">
+      <div class="stage"><canvas id="out" width="1440" height="2560" aria-label="Превью баннера"></canvas></div>
+      <div class="actions"><button class="btn primary" id="save" type="button">Скачать PNG</button></div>
+      <p class="note" id="saveNote"></p>
+    </aside>
+  </div>
+</div>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="box">
+    <img id="sheetImg" alt="Готовый баннер">
+    <p class="note">Нажми и удерживай картинку (или правый клик), чтобы сохранить.</p>
+    <button class="btn" id="sheetClose" type="button">Закрыть</button>
+  </div>
+</div>
+
+<script>
+(function(){
+const W=1080,H=1920,SC=1440/1080;
+const $=id=>document.getElementById(id);
+
+/* Fixed criteria. Weights are hidden from the UI and the banner. */
+const CRIT=[
+  {key:"vibe",name:"Вайб",w:35},
+  {key:"structure",name:"Структура",w:20},
+  {key:"sound",name:"Звук",w:25},
+  {key:"relevance",name:"Актуальность",w:15}
+];
+const WSUM=CRIT.reduce((a,c)=>a+c.w,0);
+
+/* Tiers: by the score rounded to one decimal. */
+function tier(v){const r=Math.round(v*10)/10;return r<4?"bad":r<=7?"mid":"good"}
+const TIER_LABEL={bad:"плохо",mid:"нормальный",good:"хороший"};
+const TOTAL_LABEL={bad:"плохо",mid:"нормальный альбом",good:"хороший альбом"};
+const TIER_BANNER={bad:"ПЛОХО",mid:"НОРМАЛЬНЫЙ АЛЬБОМ",good:"ХОРОШИЙ АЛЬБОМ"};
+const TIER_COL={dark:{bad:"#ff7a66",mid:"#f2b84b",good:"#4fd18b"},light:{bad:"#c2412d",mid:"#a56a00",good:"#1f8a4c"}};
+
+const BLANK=()=>({
+  artist:"",title:"",year:"",author:"",
+  scores:{vibe:6,structure:6,sound:6,relevance:6},
+  scenario:"",verdict:"",
+  theme:"dark",accent:"#9fc3e6",accentAuto:true,cover:null
+});
+
+let S=BLANK();
+let coverImg=null;
+
+const clamp10=v=>Math.min(10,Math.max(0,Math.round(v*10)/10));
+const fmt=v=>(Math.round(v*10)/10).toFixed(1);
+const parseScore=s=>{const n=parseFloat(String(s).replace(",","."));return isNaN(n)?null:clamp10(n)};
+const total=()=>CRIT.reduce((a,c)=>a+S.scores[c.key]*c.w,0)/WSUM;
+function persist(){}
+
+/* ---------- color ---------- */
+function hexToRgb(h){const n=parseInt(h.slice(1),16);return[n>>16&255,n>>8&255,n&255]}
+function rgbToHsl(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h=0,s=0,l=(mx+mn)/2;
+  if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);
+    h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;h/=6}return[h,s,l]}
+function hslToHex(h,s,l){const f=n=>{const k=(n+h*12)%12,a=s*Math.min(l,1-l);
+  const c=l-a*Math.max(-1,Math.min(k-3,9-k,1));return Math.round(c*255).toString(16).padStart(2,"0")};return"#"+f(0)+f(8)+f(4)}
+function coverAccent(img,theme){
+  const c=document.createElement("canvas");c.width=c.height=24;const x=c.getContext("2d");
+  x.drawImage(img,0,0,24,24);const d=x.getImageData(0,0,24,24).data;
+  let best=null,bestScore=-1,r=0,g=0,b=0;
+  for(let i=0;i<d.length;i+=4){r+=d[i];g+=d[i+1];b+=d[i+2];
+    const [h,s,l]=rgbToHsl(d[i],d[i+1],d[i+2]);const sc=s*(1-Math.abs(l-.5));
+    if(sc>bestScore){bestScore=sc;best=[h,s,l]}}
+  let [h,s]=best;
+  if(bestScore<.12){const n=d.length/4;[h,s]=rgbToHsl(r/n,g/n,b/n)}
+  s=Math.max(.35,Math.min(s,.75));
+  return hslToHex(h,s,theme==="dark"?.7:.38);
+}
+const accentNow=()=>S.accentAuto&&coverImg?coverAccent(coverImg,S.theme):(S.accent||"#9fc3e6");
+
+/* ---------- canvas ---------- */
+const cv=$("out"),ctx=cv.getContext("2d");
+let grain=null;
+function makeGrain(){const g=document.createElement("canvas");g.width=g.height=160;const x=g.getContext("2d");
+  const im=x.createImageData(160,160);for(let i=0;i<im.data.length;i+=4){const v=Math.random()*255;
+  im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=14}x.putImageData(im,0,0);return g}
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+function drawCoverFit(c,img,w,h){const s=Math.max(w/img.width,h/img.height);const iw=img.width*s,ih=img.height*s;c.drawImage(img,(w-iw)/2,(h-ih)/2,iw,ih)}
+function blurredBg(img){
+  const a=document.createElement("canvas");a.width=12;a.height=21;drawCoverFit(a.getContext("2d"),img,12,21);
+  const b=document.createElement("canvas");b.width=108;b.height=192;const bx=b.getContext("2d");bx.imageSmoothingQuality="high";bx.drawImage(a,0,0,108,192);
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";ctx.drawImage(b,0,0,W,H);
+}
+function wrap(text,maxW){
+  const words=String(text||"").trim().split(/\s+/).filter(Boolean),lines=[];let cur="";
+  for(const w of words){const t=cur?cur+" "+w:w;if(ctx.measureText(t).width<=maxW)cur=t;else{if(cur)lines.push(cur);cur=w}}
+  if(cur)lines.push(cur);return lines;
+}
+function clampLines(lines,max,maxW){if(lines.length<=max)return lines;const out=lines.slice(0,max);
+  let last=out[max-1];while(last.length&&ctx.measureText(last+"…").width>maxW)last=last.slice(0,-1);
+  out[max-1]=last.replace(/[\s,.;:—-]+$/,"")+"…";return out}
+function spaced(px){if("letterSpacing"in ctx)ctx.letterSpacing=px+"px"}
+
+function draw(){
+  const dark=S.theme==="dark",acc=accentNow(),TC=TIER_COL[dark?"dark":"light"];
+  const fg=dark?"#f2f4f7":"#12161c",mu=dark?"rgba(242,244,247,.62)":"rgba(18,22,28,.58)",track=dark?"rgba(255,255,255,.14)":"rgba(18,22,28,.12)";
+  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.save();ctx.setTransform(SC,0,0,SC,0,0);spaced(0);
+
+  // background
+  if(coverImg){blurredBg(coverImg)}
+  else{const [r,g,b]=hexToRgb(acc);const gr=ctx.createLinearGradient(0,0,0,H);
+    gr.addColorStop(0,`rgb(${r*.45|0},${g*.45|0},${b*.45|0})`);gr.addColorStop(1,dark?"#07090c":"#dfe5eb");ctx.fillStyle=gr;ctx.fillRect(0,0,W,H)}
+  ctx.fillStyle=dark?"rgba(6,8,11,.52)":"rgba(247,248,250,.72)";ctx.fillRect(0,0,W,H);
+  const vg=ctx.createLinearGradient(0,H*.35,0,H);vg.addColorStop(0,"rgba(0,0,0,0)");vg.addColorStop(1,dark?"rgba(4,5,8,.7)":"rgba(255,255,255,.55)");
+  ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
+  if(!grain)grain=makeGrain();ctx.fillStyle=ctx.createPattern(grain,"repeat");ctx.fillRect(0,0,W,H);
+
+  // header
+  ctx.textBaseline="alphabetic";ctx.fillStyle=mu;ctx.font="700 26px Manrope";spaced(5);
+  ctx.textAlign="left";ctx.fillText("РЕЦЕНЗИЯ",90,112);
+  ctx.textAlign="right";if(S.author)ctx.fillText(S.author.toUpperCase(),W-90,112);spaced(0);
+
+  // cover
+  const cs=600,cx=(W-cs)/2,cy=160;
+  ctx.save();ctx.shadowColor="rgba(0,0,0,.45)";ctx.shadowBlur=70;ctx.shadowOffsetY=28;
+  rr(cx,cy,cs,cs,22);ctx.fillStyle=dark?"#111":"#ccc";ctx.fill();ctx.restore();
+  ctx.save();rr(cx,cy,cs,cs,22);ctx.clip();
+  if(coverImg){const s=Math.max(cs/coverImg.width,cs/coverImg.height);const iw=coverImg.width*s,ih=coverImg.height*s;
+    ctx.drawImage(coverImg,cx+(cs-iw)/2,cy+(cs-ih)/2,iw,ih)}
+  else{const [r,g,b]=hexToRgb(acc);const gg=ctx.createLinearGradient(cx,cy,cx,cy+cs);
+    gg.addColorStop(0,`rgb(${r*.3|0},${g*.3|0},${b*.3|0})`);gg.addColorStop(1,"#05070a");ctx.fillStyle=gg;ctx.fillRect(cx,cy,cs,cs);
+    const rg=ctx.createRadialGradient(cx+cs*.62,cy+cs*.4,10,cx+cs*.62,cy+cs*.4,cs*.42);
+    rg.addColorStop(0,"rgba(255,255,255,.95)");rg.addColorStop(.35,"rgba(255,255,255,.5)");rg.addColorStop(1,"rgba(255,255,255,0)");
+    ctx.fillStyle=rg;ctx.fillRect(cx,cy,cs,cs);
+    ctx.fillStyle="rgba(255,255,255,.55)";ctx.font="600 30px Manrope";ctx.textAlign="left";spaced(4);
+    ctx.fillText((S.artist||"").toLowerCase(),cx+40,cy+cs-48);spaced(0)}
+  ctx.restore();
+  ctx.save();rr(cx,cy,cs,cs,22);ctx.strokeStyle="rgba(255,255,255,.12)";ctx.lineWidth=2;ctx.stroke();ctx.restore();
+
+  // titles
+  let y=cy+cs+92;ctx.textAlign="center";
+  ctx.fillStyle=mu;ctx.font="700 30px Manrope";spaced(6);
+  ctx.fillText([(S.artist||"").toUpperCase(),S.year].filter(Boolean).join("  ·  "),W/2,y);spaced(0);
+  ctx.fillStyle=fg;ctx.font="600 78px 'Cormorant Garamond'";
+  y+=82;for(const l of clampLines(wrap(S.title,900),2,900)){ctx.fillText(l,W/2,y);y+=78}
+  y+=36;
+
+  // final score
+  const fs=total(),ft=tier(fs),fcol=TC[ft],top=y;
+  ctx.textAlign="left";ctx.fillStyle=mu;ctx.font="700 24px Manrope";spaced(5);ctx.fillText("ИТОГ",90,top+20);spaced(0);
+  const num=fmt(fs);let big=180;ctx.font=`700 ${big}px Unbounded`;
+  while(ctx.measureText(num).width>320&&big>110){big-=10;ctx.font=`700 ${big}px Unbounded`}
+  const base=top+20+big*.92;ctx.fillStyle=fcol;ctx.fillText(num,84,base);
+  const nw=ctx.measureText(num).width;ctx.fillStyle=mu;ctx.font="600 40px Unbounded";ctx.fillText("/10",84+nw+10,base);
+  // tier pill
+  ctx.font="800 22px Manrope";spaced(3);const lbl=TIER_BANNER[ft];const lw=ctx.measureText(lbl).width+36;
+  const py=base+30;rr(90,py,lw,46,23);ctx.strokeStyle=fcol;ctx.lineWidth=3;ctx.stroke();
+  ctx.fillStyle=fcol;ctx.fillText(lbl,108,py+31);spaced(0);
+  const leftBottom=py+46;
+
+  // criteria
+  const cxL=500,cxR=W-90,cw=cxR-cxL;let ry=top+14;
+  for(const c of CRIT){
+    const v=S.scores[c.key],col=TC[tier(v)];
+    ctx.font="600 30px Manrope";ctx.fillStyle=fg;ctx.textAlign="left";ctx.fillText(c.name,cxL,ry+18);
+    ctx.textAlign="right";ctx.font="700 30px Unbounded";ctx.fillStyle=col;ctx.fillText(fmt(v),cxR,ry+18);
+    const by=ry+38;rr(cxL,by,cw,10,5);ctx.fillStyle=track;ctx.fill();
+    const p=v/10;if(p>0){rr(cxL,by,Math.max(10,cw*p),10,5);ctx.fillStyle=col;ctx.fill()}
+    ry+=88;
+  }
+  y=Math.max(leftBottom,ry)+50;
+
+  ctx.fillStyle=track;ctx.fillRect(90,y,W-180,2);y+=78;
+
+  // scenario
+  const footerTop=H-170;
+  if(S.scenario){
+    ctx.textAlign="left";ctx.fillStyle=acc;ctx.font="600 150px 'Cormorant Garamond'";ctx.fillText("“",78,y+70);
+    ctx.fillStyle=fg;ctx.font="italic 500 48px 'Cormorant Garamond'";
+    const lh=60,avail=Math.max(1,Math.floor((footerTop-40-(y+14))/lh)),qw=W-180-70;
+    let qy=y+14;for(const l of clampLines(wrap(S.scenario,qw),Math.min(avail,7),qw)){ctx.fillText(l,160,qy);qy+=lh}
+  }
+
+  // verdict
+  if(S.verdict){
+    ctx.textAlign="center";ctx.font="700 34px Manrope";
+    const vl=clampLines(wrap(S.verdict,W-180),2,W-180);let vy=H-120-(vl.length-1)*46;
+    ctx.fillStyle=acc;ctx.fillRect(W/2-30,vy-62,60,4);ctx.fillStyle=fg;
+    for(const l of vl){ctx.fillText(l,W/2,vy);vy+=46}
+  }
+  ctx.restore();
+}
+let raf=0;const redraw=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(draw)};
+
+/* ---------- form ---------- */
+const fields=["artist","title","year","author","scenario","verdict"];
+const tierVar=t=>`var(--${t})`;
+function paintItem(el,v){const t=tier(v);el.style.setProperty("--tier",tierVar(t));el.querySelector(".chip").textContent=TIER_LABEL[t]}
+function renderCrit(){
+  const box=$("crit");box.textContent="";
+  CRIT.forEach(c=>{
+    const it=document.createElement("div");it.className="c-item";
+    const nm=document.createElement("div");nm.className="c-name";nm.textContent=c.name;
+    const chip=document.createElement("span");chip.className="chip";
+    const sc=document.createElement("div");sc.className="c-score";
+    const rg=document.createElement("input");rg.type="range";rg.min=0;rg.max=10;rg.step=0.1;rg.value=S.scores[c.key];rg.id="r-"+c.key;rg.setAttribute("aria-label",c.name+", оценка");
+    const ni=document.createElement("input");ni.type="text";ni.inputMode="decimal";ni.value=fmt(S.scores[c.key]);ni.id="n-"+c.key;ni.setAttribute("aria-label",c.name+", оценка числом");
+    rg.oninput=()=>{const v=clamp10(Number(rg.value));S.scores[c.key]=v;ni.value=fmt(v);paintItem(it,v);changed()};
+    ni.oninput=()=>{const v=parseScore(ni.value);if(v===null)return;S.scores[c.key]=v;rg.value=v;paintItem(it,v);changed()};
+    ni.onblur=()=>{ni.value=fmt(S.scores[c.key])};
+    sc.append(rg,ni);it.append(nm,chip,sc);box.append(it);paintItem(it,S.scores[c.key]);
+  });
+}
+function updateTotal(){
+  const v=total(),t=tier(v);
+  $("totalBox").style.setProperty("--tier",tierVar(t));
+  $("totalOut").innerHTML="";$("totalOut").append(fmt(v));const sm=document.createElement("small");sm.textContent=" / 10";$("totalOut").append(sm);
+  $("totalChip").textContent=TOTAL_LABEL[t];
+}
+function changed(){updateTotal();persist();redraw()}
+function fillForm(){
+  fields.forEach(f=>{$(f).value=S[f]||""});
+  $("theme").value=S.theme;$("accent").value=S.accent||"#9fc3e6";$("accentAuto").checked=!!S.accentAuto;
+  renderCrit();updateTotal();
+}
+fields.forEach(f=>$(f).addEventListener("input",e=>{S[f]=e.target.value;changed()}));
+$("theme").onchange=e=>{S.theme=e.target.value;changed()};
+$("accent").oninput=e=>{S.accent=e.target.value;S.accentAuto=false;$("accentAuto").checked=false;changed()};
+$("accentAuto").onchange=e=>{S.accentAuto=e.target.checked;changed()};
+$("reset").onclick=()=>{S=BLANK();$("cover").value="";fillForm();setCover(null);$("saveNote").textContent=""};
+
+/* ---------- cover ---------- */
+function setCover(dataUrl){
+  if(!dataUrl){coverImg=null;S.cover=null;$("thumb").hidden=true;$("thumbEmpty").hidden=false;$("clearCover").hidden=true;changed();return}
+  const im=new Image();im.onload=()=>{
+    const m=1200;
+    if(im.width>m||im.height>m){const c=document.createElement("canvas");const s=m/Math.max(im.width,im.height);
+      c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+      const src=c.toDataURL("image/jpeg",.9);const i2=new Image();i2.onload=()=>{coverImg=i2;done(src)};i2.src=src;return}
+    coverImg=im;done(dataUrl)};
+  im.onerror=()=>{$("saveNote").textContent="Не получилось открыть картинку. Попробуй JPG или PNG."};
+  im.src=dataUrl;
+  function done(src){S.cover=src;$("thumb").src=src;$("thumb").hidden=false;$("thumbEmpty").hidden=true;$("clearCover").hidden=false;changed()}
+}
+function readFile(f){if(!f||!f.type.startsWith("image/"))return;const r=new FileReader();r.onload=()=>setCover(r.result);r.readAsDataURL(f)}
+$("cover").onchange=e=>readFile(e.target.files[0]);
+$("clearCover").onclick=()=>setCover(null);
+const drop=$("drop");
+drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("over")});
+drop.addEventListener("dragleave",()=>drop.classList.remove("over"));
+drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("over");readFile(e.dataTransfer.files[0])});
+document.addEventListener("paste",e=>{const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith("image/"));if(it){e.preventDefault();readFile(it.getAsFile())}});
+
+/* ---------- save ---------- */
+let downloads=null;
+if(window.claude?.use){window.claude.use("downloads").then(d=>{downloads=d}).catch(()=>{})}
+function fname(){const n=[S.artist,S.title].filter(Boolean).join(" - ")||"album";return n.replace(/[\\/:*?"<>|]+/g,"").slice(0,120)+".png"}
+function showSheet(){$("sheetImg").src=cv.toDataURL("image/png");$("sheet").hidden=false}
+$("sheetClose").onclick=()=>{$("sheet").hidden=true};
+$("save").onclick=()=>{
+  draw();
+  if(!downloads){showSheet();return}
+  cv.toBlob(async blob=>{
+    try{await downloads.save({filename:fname(),data:blob});$("saveNote").textContent="Готово: баннер сохранён."}
+    catch(err){const c=err&&err.code;
+      if(c==="declined")$("saveNote").textContent="Сохранение отменено.";
+      else if(c==="rate_limited")$("saveNote").textContent="Окно сохранения уже открыто. Подожди секунду и нажми ещё раз.";
+      else showSheet()}
+  },"image/png");
+};
+
+/* ---------- boot ---------- */
+fillForm();
+draw();
+const sample="Ёйжщ “”0123456789 рецензия";
+Promise.all([
+  document.fonts.load("700 100px Unbounded",sample),document.fonts.load("600 40px Unbounded",sample),
+  document.fonts.load("600 78px 'Cormorant Garamond'",sample),document.fonts.load("italic 500 48px 'Cormorant Garamond'",sample),
+  document.fonts.load("700 30px Manrope",sample),document.fonts.load("800 22px Manrope",sample)
+]).catch(()=>{}).finally(redraw);
+document.fonts.ready.then(redraw);
+})();
+</script>
+
+</body></html>
