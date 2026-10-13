@@ -134,8 +134,8 @@ input[type=color]{width:44px;height:36px;border:1px solid var(--line);border-rad
 
       <section class="card">
         <h2>Текст</h2>
-        <label class="f">Сценарий / вайб<textarea id="scenario" maxlength="320"></textarea></label>
-        <label class="f">Вердикт одной строкой<input type="text" id="verdict" maxlength="90"></label>
+        <label class="f">Описание<textarea id="scenario" maxlength="220"></textarea></label>
+        <p class="note" id="scCount" style="text-align:right;font-variant-numeric:tabular-nums">0 / 220</p>
       </section>
 
       <section class="card">
@@ -198,7 +198,7 @@ const GOLD_STOPS={dark:["#fff1b8","#f0c75e","#b8862b","#ffe08a"],light:["#9a6f0c
 const BLANK=()=>({
   artist:"",title:"",year:"",author:"",
   scores:{vibe:6,structure:6,sound:6,relevance:6},
-  scenario:"",verdict:"",
+  scenario:"",
   theme:"dark",accent:"#9fc3e6",accentAuto:true,cover:null
 });
 
@@ -281,7 +281,7 @@ function draw(){
   ctx.textAlign="right";if(S.author)ctx.fillText(S.author.toUpperCase(),W-90,112);spaced(0);
 
   // cover
-  const cs=600,cx=(W-cs)/2,cy=160;
+  const cs=520,cx=(W-cs)/2,cy=160;
   ctx.save();ctx.shadowColor="rgba(0,0,0,.45)";ctx.shadowBlur=70;ctx.shadowOffsetY=28;
   rr(cx,cy,cs,cs,22);ctx.fillStyle=dark?"#111":"#ccc";ctx.fill();ctx.restore();
   ctx.save();rr(cx,cy,cs,cs,22);ctx.clip();
@@ -297,61 +297,100 @@ function draw(){
   ctx.restore();
   ctx.save();rr(cx,cy,cs,cs,22);ctx.strokeStyle="rgba(255,255,255,.12)";ctx.lineWidth=2;ctx.stroke();ctx.restore();
 
-  // titles
-  let y=cy+cs+92;ctx.textAlign="center";
-  ctx.fillStyle=mu;ctx.font="700 30px Manrope";spaced(6);
-  ctx.fillText([(S.artist||"").toUpperCase(),S.year].filter(Boolean).join("  ·  "),W/2,y);spaced(0);
-  ctx.fillStyle=fg;ctx.font="600 78px 'Cormorant Garamond'";
-  y+=82;for(const l of clampLines(wrap(S.title,900),2,900)){ctx.fillText(l,W/2,y);y+=78}
-  y+=36;
-
-  // final score
-  const fs=total(),ft=totalTier(fs),top=y;
-  ctx.textAlign="left";ctx.fillStyle=mu;ctx.font="700 24px Manrope";spaced(5);ctx.fillText("ИТОГ",90,top+20);spaced(0);
-  const num=fmt(fs);let big=180;ctx.font=`700 ${big}px Unbounded`;
-  while(ctx.measureText(num).width>320&&big>110){big-=10;ctx.font=`700 ${big}px Unbounded`}
-  const base=top+20+big*.92,nw=ctx.measureText(num).width;
-  const fcol=golden?goldGrad(84,base-big*.8,84+nw,base,dark):TC[ft];
-  ctx.save();if(golden){ctx.shadowColor=dark?"rgba(240,199,94,.45)":"rgba(168,122,18,.3)";ctx.shadowBlur=36}
-  ctx.fillStyle=fcol;ctx.fillText(num,84,base);ctx.restore();
-  ctx.fillStyle=golden?goldGrad(84+nw,base-40,84+nw+120,base,dark):mu;ctx.font="600 40px Unbounded";ctx.fillText("/10",84+nw+10,base);
-  // tier pill
-  ctx.font="800 22px Manrope";spaced(3);const lbl=TIER_BANNER[ft];const lw=ctx.measureText(lbl).width+36;
-  const py=base+30,pcol=golden?goldGrad(90,py,90+lw,py+46,dark):TC[ft];
-  rr(90,py,lw,46,23);ctx.strokeStyle=pcol;ctx.lineWidth=3;ctx.stroke();
-  ctx.fillStyle=pcol;ctx.fillText(lbl,108,py+31);spaced(0);
-  const leftBottom=py+46;
-
-  // criteria
-  const cxL=500,cxR=W-90,cw=cxR-cxL;let ry=top+14;
-  for(const c of CRIT){
-    const v=S.scores[c.key],col=TC[tier(v)];
-    ctx.font="600 30px Manrope";ctx.fillStyle=fg;ctx.textAlign="left";ctx.fillText(c.name,cxL,ry+18);
-    ctx.textAlign="right";ctx.font="700 30px Unbounded";ctx.fillStyle=col;ctx.fillText(fmt(v),cxR,ry+18);
-    const by=ry+38;rr(cxL,by,cw,10,5);ctx.fillStyle=track;ctx.fill();
-    const p=v/10;if(p>0){rr(cxL,by,Math.max(10,cw*p),10,5);ctx.fillStyle=col;ctx.fill()}
-    ry+=88;
+  // ---- lower layout: measure each block, then spread them evenly down to the bottom edge ----
+  const regionTop=cy+cs,regionBottom=H-104,avail=regionBottom-regionTop;
+  const fs=total(),ft=totalTier(fs),num=fmt(fs);
+  const meta=[(S.artist||"").toUpperCase(),S.year].filter(Boolean).join("  ·  ");
+  ctx.font="600 78px 'Cormorant Garamond'";
+  const tLines=S.title?clampLines(wrap(S.title,900),2,900):[];
+  const hT=tLines.length?(meta?44:0)+62+(tLines.length-1)*78+18:(meta?30:0);
+  function drawTitle(top){
+    ctx.textAlign="center";
+    if(meta){ctx.fillStyle=mu;ctx.font="700 30px Manrope";spaced(6);ctx.fillText(meta,W/2,top+24);spaced(0)}
+    ctx.fillStyle=fg;ctx.font="600 78px 'Cormorant Garamond'";
+    let b=top+(meta?44:0)+62;for(const l of tLines){ctx.fillText(l,W/2,b);b+=78}
   }
-  y=Math.max(leftBottom,ry)+50;
+  function glowAt(gx,gy,nw,big){
+    const gr=Math.max(nw,big)*.95,glow=ctx.createRadialGradient(gx,gy,0,gx,gy,gr);
+    const c=dark?"240,199,94":"168,122,18",a=dark?.22:.14;
+    glow.addColorStop(0,`rgba(${c},${a})`);glow.addColorStop(.45,`rgba(${c},${a*.45})`);glow.addColorStop(1,`rgba(${c},0)`);
+    ctx.save();ctx.translate(gx,gy);ctx.scale(1.25,.8);ctx.translate(-gx,-gy);
+    ctx.fillStyle=glow;ctx.fillRect(gx-gr,gy-gr,gr*2,gr*2);ctx.restore();
+  }
+  function fitBig(start,maxW,slashW){let big=start;ctx.font=`700 ${big}px Unbounded`;
+    while(ctx.measureText(num).width>maxW-slashW-10&&big>90){big-=6;ctx.font=`700 ${big}px Unbounded`}return big}
+  function drawNumber(x,base,big,slashPx){
+    ctx.font=`700 ${big}px Unbounded`;const nw=ctx.measureText(num).width;
+    if(golden)glowAt(x+nw/2,base-big*.38,nw,big);
+    ctx.fillStyle=golden?goldGrad(x,base-big*.8,x+nw,base,dark):TC[ft];ctx.font=`700 ${big}px Unbounded`;ctx.textAlign="left";ctx.fillText(num,x,base);
+    ctx.font=`600 ${slashPx}px Unbounded`;ctx.fillStyle=golden?goldGrad(x+nw,base-slashPx,x+nw+slashPx*3,base,dark):mu;ctx.fillText("/10",x+nw+10,base);
+  }
+  function pill(x,y,h,px,center){
+    ctx.font=`800 ${px}px Manrope`;spaced(3);const lbl=TIER_BANNER[ft];const lw=ctx.measureText(lbl).width+h*.8;
+    const x0=center?W/2-lw/2:x,pcol=golden?goldGrad(x0,y,x0+lw,y+h,dark):TC[ft];
+    rr(x0,y,lw,h,h/2);ctx.strokeStyle=pcol;ctx.lineWidth=3;ctx.stroke();
+    ctx.fillStyle=pcol;ctx.textAlign="left";ctx.fillText(lbl,x0+h*.4,y+h/2+px*.36);spaced(0);
+  }
+  function critRows(top,x0,x1,rowH,namePx,barH){
+    const cw=x1-x0;let ry=top;
+    for(const c of CRIT){
+      const v=S.scores[c.key],col=TC[tier(v)];
+      ctx.font=`600 ${namePx}px Manrope`;ctx.fillStyle=fg;ctx.textAlign="left";ctx.fillText(c.name,x0,ry+namePx*.6+6);
+      ctx.textAlign="right";ctx.font=`700 ${namePx}px Unbounded`;ctx.fillStyle=col;ctx.fillText(fmt(v),x1,ry+namePx*.6+6);
+      const by=ry+namePx+8;rr(x0,by,cw,barH,barH/2);ctx.fillStyle=track;ctx.fill();
+      const p=v/10;if(p>0){rr(x0,by,Math.max(barH,cw*p),barH,barH/2);ctx.fillStyle=col;ctx.fill()}
+      ry+=rowH;
+    }
+  }
+  const critH=(rowH,namePx,barH)=>(CRIT.length-1)*rowH+namePx+8+barH;
+  const place=blocks=>{const sum=blocks.reduce((a,b)=>a+b.h,0);const g=Math.max(24,(avail-sum)/blocks.length);
+    let y=regionTop;for(const b of blocks){y+=g;b.draw(y);y+=b.h}};
 
-  ctx.fillStyle=track;ctx.fillRect(90,y,W-180,2);y+=78;
-
-  // scenario
-  const footerTop=H-170;
   if(S.scenario){
-    ctx.textAlign="left";ctx.fillStyle=acc;ctx.font="600 150px 'Cormorant Garamond'";ctx.fillText("“",78,y+70);
-    ctx.fillStyle=fg;ctx.font="italic 500 48px 'Cormorant Garamond'";
-    const lh=60,avail=Math.max(1,Math.floor((footerTop-40-(y+14))/lh)),qw=W-180-70;
-    let qy=y+14;for(const l of clampLines(wrap(S.scenario,qw),Math.min(avail,7),qw)){ctx.fillText(l,160,qy);qy+=lh}
+    // mode A: compact score row + description
+    ctx.font="600 40px Unbounded";const slashW=ctx.measureText("/10").width;
+    const big=fitBig(180,390,slashW);
+    const hS=Math.max(20+big*.92+30+46,critH(76,30,10));
+    const qx=160,qw=W-90-qx,nB=hT?3:2,room=avail-hT-hS-40*nB;
+    let fsz=56,lh=70,ql=[],hQ=0;
+    for(;fsz>=30;fsz-=2){lh=Math.round(fsz*1.25);ctx.font=`italic 500 ${fsz}px 'Cormorant Garamond'`;ql=wrap(S.scenario,qw);
+      hQ=50+fsz*.85+(ql.length-1)*lh+fsz*.3;if(hQ<=room)break}
+    if(fsz<30){fsz=30;lh=38;ctx.font="italic 500 30px 'Cormorant Garamond'";ql=wrap(S.scenario,qw);
+      const maxN=Math.max(1,Math.floor((room-50-fsz*1.15)/lh)+1);ql=clampLines(ql,maxN,qw);hQ=50+fsz*.85+(ql.length-1)*lh+fsz*.3}
+    const blocks=[];
+    if(hT)blocks.push({h:hT,draw:drawTitle});
+    blocks.push({h:hS,draw:top=>{
+      ctx.textAlign="left";ctx.fillStyle=mu;ctx.font="700 24px Manrope";spaced(5);ctx.fillText("ИТОГ",90,top+20);spaced(0);
+      const base=top+20+big*.92;drawNumber(84,base,big,40);pill(90,base+30,46,22,false);
+      critRows(top+2,500,W-90,76,30,10);
+    }});
+    blocks.push({h:hQ,draw:top=>{
+      ctx.fillStyle=track;ctx.fillRect(90,top,W-180,2);
+      const first=top+50+fsz*.85;
+      ctx.textAlign="left";ctx.fillStyle=acc;ctx.font=`600 ${Math.round(Math.min(fsz,46)*3)}px 'Cormorant Garamond'`;ctx.fillText("“",74,first+Math.min(fsz,46)*1.15);
+      ctx.fillStyle=fg;ctx.font=`italic 500 ${fsz}px 'Cormorant Garamond'`;
+      let qy=first;for(const l of ql){ctx.fillText(l,qx,qy);qy+=lh}
+    }});
+    place(blocks);
+  }else{
+    // mode B: no description, the score takes the whole lower part
+    ctx.font="600 56px Unbounded";const slashW=ctx.measureText("/10").width;
+    let big=fitBig(240,900,slashW),rowH=96,namePx=36;
+    const totH=b=>40+b*.92+34+56;
+    const nB=hT?3:2;
+    let left=avail-hT-totH(big)-critH(rowH,namePx,14)-50*nB;
+    if(left>0){rowH=Math.min(130,rowH+left*.5/3);big=fitBig(Math.min(300,big+left*.25),900,slashW)}
+    const blocks=[];
+    if(hT)blocks.push({h:hT,draw:drawTitle});
+    blocks.push({h:totH(big),draw:top=>{
+      ctx.textAlign="center";ctx.fillStyle=mu;ctx.font="700 26px Manrope";spaced(6);ctx.fillText("ИТОГ",W/2,top+24);spaced(0);
+      ctx.font=`700 ${big}px Unbounded`;const nw=ctx.measureText(num).width;
+      const base=top+40+big*.92;drawNumber(W/2-(nw+10+slashW)/2,base,big,56);pill(0,base+34,56,26,true);
+    }});
+    blocks.push({h:critH(rowH,namePx,14),draw:top=>critRows(top,90,W-90,rowH,namePx,14)});
+    place(blocks);
   }
 
-  // verdict
-  if(S.verdict){
-    ctx.textAlign="center";ctx.font="700 34px Manrope";
-    const vl=clampLines(wrap(S.verdict,W-180),2,W-180);let vy=H-120-(vl.length-1)*46;
-    ctx.fillStyle=acc;ctx.fillRect(W/2-30,vy-62,60,4);ctx.fillStyle=fg;
-    for(const l of vl){ctx.fillText(l,W/2,vy);vy+=46}
-  }
 
   // gold frame
   if(golden){
@@ -369,7 +408,8 @@ function draw(){
 let raf=0;const redraw=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(draw)};
 
 /* ---------- form ---------- */
-const fields=["artist","title","year","author","scenario","verdict"];
+const fields=["artist","title","year","author","scenario"];
+const updCount=()=>{$("scCount").textContent=(S.scenario||"").length+" / 220"};
 const tierVar=t=>`var(--${t})`;
 function paintItem(el,v){const t=tier(v);el.style.setProperty("--tier",tierVar(t));el.querySelector(".chip").textContent=TIER_LABEL[t];
   const r=el.querySelector("input[type=range]");if(r)r.style.setProperty("--p",(v*10)+"%")}
@@ -394,7 +434,7 @@ function updateTotal(){
   $("totalOut").innerHTML="";$("totalOut").append(fmt(v));const sm=document.createElement("small");sm.textContent=" / 10";$("totalOut").append(sm);
   $("totalChip").textContent=TOTAL_LABEL[t];
 }
-function changed(){updateTotal();persist();redraw()}
+function changed(){updateTotal();updCount();persist();redraw()}
 function fillForm(){
   fields.forEach(f=>{$(f).value=S[f]||""});
   $("theme").value=S.theme;$("accent").value=S.accent||"#9fc3e6";$("accentAuto").checked=!!S.accentAuto;
